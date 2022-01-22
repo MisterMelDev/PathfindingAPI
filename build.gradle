@@ -1,0 +1,19 @@
+plugins {
+    id 'java'
+}
+
+group = 'com.melluh'
+version = '1.0.0'
+
+sourceCompatibility = '1.17'
+targetCompatibility = '1.17'
+
+repositories {
+    maven {
+        url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
+    }
+}
+
+dependencies {
+    compileOnly 'org.spigotmc:spigot-api:1.18.1-R0.1-SNAPSHOT'
+}
