@@ -20,7 +20,7 @@ public class Pathfinder {
 		if(origin.getWorld() != goal.getWorld())
 			throw new IllegalStateException("Cannot pathfind across worlds");
 		
-		AStar alghoritm = new AStar(this, new BlockPosition(origin), new BlockPosition(goal));
+		AStar alghoritm = new AStar(this, origin.getWorld(), new BlockPosition(origin), new BlockPosition(goal));
 		alghoritm.findPath();
 		return Optional.ofNullable(alghoritm.getPath());
 	}

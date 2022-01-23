@@ -8,12 +8,18 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.block.BlockFace;
+
 import com.melluh.pathfindingapi.util.BlockPosition;
+import com.melluh.pathfindingapi.util.WorldUtils;
 
 public class AStar {
 
 	private Pathfinder pathfinder;
 	
+	private World world;
 	private PathNode startNode;
 	private BlockPosition goal;
 	
@@ -23,8 +29,9 @@ public class AStar {
 	
 	private Path resultPath;
 	
-	protected AStar(Pathfinder pathfinder, BlockPosition start, BlockPosition goal) {
+	protected AStar(Pathfinder pathfinder, World world, BlockPosition start, BlockPosition goal) {
 		this.pathfinder = pathfinder;
+		this.world = world;
 		this.startNode = new PathNode(start);
 		this.goal = goal;
 	}
@@ -69,23 +76,38 @@ public class AStar {
 		
 		// TODO: y-movement
 		for(int dX = -1; dX <= 1; dX++) {
-			for(int dZ = -1; dZ <= 1; dZ++) {
-				if(dX == 0 && dZ == 0)
-					continue;
-				
-				if(!pathfinder.canMoveDiagonally() && dX * dZ != 0)
-					continue;
-				
-				BlockPosition neighbourPos = node.getPosition().getRelative(dX, 0, dZ);
-				PathNode neighbour = this.getNode(neighbourPos);
-				
-				double tentativeGCost = node.getGCost() + node.getPosition().distanceTo(neighbourPos);
-				if(tentativeGCost < neighbour.getGCost()) { // check if this path is better than the previous one
-					neighbour.setParent(node, tentativeGCost);
-					this.addOpenNode(neighbour);
+			for(int dY = -1; dY <= 1; dY++) {
+				for(int dZ = -1; dZ <= 1; dZ++) {
+					// Skip if not moving
+					if(dX == 0 && dY == 0 && dZ == 0)
+						continue;
+					
+					// Diagonal movement is not allowed when:
+					// - It is disabled in the pathfinder
+					// - Moving up/down
+					if(dX * dZ != 0 && (!pathfinder.canMoveDiagonally() || dY != 0))
+						continue;
+					
+					BlockPosition neighbourPos = node.getPosition().getRelative(dX, dY, dZ);
+					if(!this.canStandAt(neighbourPos.toLocation(world)))
+						continue;
+					
+					PathNode neighbour = this.getNode(neighbourPos);
+					
+					double tentativeGCost = node.getGCost() + node.getPosition().distanceTo(neighbourPos);
+					if(tentativeGCost < neighbour.getGCost()) { // check if this path is better than the previous one
+						neighbour.setParent(node, tentativeGCost);
+						this.addOpenNode(neighbour);
+					}
 				}
 			}
 		}
+	}
+	
+	private boolean canStandAt(Location feetLoc) {
+		return WorldUtils.canStandIn(feetLoc.getBlock().getType()) &&
+				WorldUtils.canStandIn(feetLoc.getBlock().getRelative(BlockFace.UP).getType()) &&
+				WorldUtils.canStandOn(feetLoc.getBlock().getRelative(BlockFace.DOWN).getType());
 	}
 	
 	private void addOpenNode(PathNode node) {
