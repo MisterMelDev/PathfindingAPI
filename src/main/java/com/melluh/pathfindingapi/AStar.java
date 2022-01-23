@@ -74,7 +74,6 @@ public class AStar {
 	private void visitNode(PathNode node) {
 		visitedNodes++;
 		
-		// TODO: y-movement
 		for(int dX = -1; dX <= 1; dX++) {
 			for(int dY = -1; dY <= 1; dY++) {
 				for(int dZ = -1; dZ <= 1; dZ++) {
@@ -85,7 +84,7 @@ public class AStar {
 					// Diagonal movement is not allowed when:
 					// - It is disabled in the pathfinder
 					// - Moving up/down
-					if(dX * dZ != 0 && (!pathfinder.canMoveDiagonally() || dY != 0))
+					if(dX * dZ != 0 && (!pathfinder.canMoveDiagonally() || dY != 0 || !this.canMoveDiagonally(node.getPosition().toLocation(world), dX, dZ)))
 						continue;
 					
 					BlockPosition neighbourPos = node.getPosition().getRelative(dX, dY, dZ);
@@ -105,9 +104,18 @@ public class AStar {
 	}
 	
 	private boolean canStandAt(Location feetLoc) {
-		return WorldUtils.canStandIn(feetLoc.getBlock().getType()) &&
-				WorldUtils.canStandIn(feetLoc.getBlock().getRelative(BlockFace.UP).getType()) &&
+		return this.isUnobstructed(feetLoc) &&
 				WorldUtils.canStandOn(feetLoc.getBlock().getRelative(BlockFace.DOWN).getType());
+	}
+	
+	private boolean canMoveDiagonally(Location feetLoc, int dX, int dZ) {
+		return this.isUnobstructed(feetLoc.clone().add(dX, 0, 0)) &&
+				this.isUnobstructed(feetLoc.clone().add(0, 0, dZ));
+	}
+	
+	private boolean isUnobstructed(Location feetLoc) {
+		return WorldUtils.canStandIn(feetLoc.getBlock().getType()) &&
+				WorldUtils.canStandIn(feetLoc.getBlock().getRelative(BlockFace.UP).getType());
 	}
 	
 	private void addOpenNode(PathNode node) {
