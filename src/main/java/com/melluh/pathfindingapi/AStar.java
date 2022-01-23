@@ -93,7 +93,7 @@ public class AStar {
 					
 					PathNode neighbour = this.getNode(neighbourPos);
 					
-					double tentativeGCost = node.getGCost() + node.getPosition().distanceTo(neighbourPos);
+					double tentativeGCost = node.getGCost() + node.getPosition().fastDistanceTo(neighbourPos);
 					if(tentativeGCost < neighbour.getGCost()) { // check if this path is better than the previous one
 						neighbour.setParent(node, tentativeGCost);
 						this.addOpenNode(neighbour);
@@ -119,7 +119,7 @@ public class AStar {
 	}
 	
 	private void addOpenNode(PathNode node) {
-		double distanceToEnd = node.getPosition().distanceTo(goal);
+		double distanceToEnd = node.getPosition().fastDistanceTo(goal);
 		node.setHCost(distanceToEnd);
 		openNodes.add(node);
 	}

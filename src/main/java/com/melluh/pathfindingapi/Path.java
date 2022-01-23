@@ -1,6 +1,7 @@
 package com.melluh.pathfindingapi;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Path {
@@ -12,7 +13,11 @@ public class Path {
 	}
 	
 	public List<PathNode> getNodes() {
-		return nodes;
+		return Collections.unmodifiableList(nodes);
+	}
+	
+	public int getNodeCount() {
+		return nodes.size();
 	}
 	
 }
