@@ -2,10 +2,10 @@ package com.melluh.pathfindingapi;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 import java.util.Set;
 
 import org.bukkit.Location;
@@ -25,6 +25,7 @@ public class AStar {
 	
 	private Set<PathNode> openNodes = new HashSet<>();
 	private Set<PathNode> closedNodes = new HashSet<>();
+	private Map<BlockPosition, PathNode> nodes = new HashMap<>();
 	private int visitedNodes;
 	
 	private Path resultPath;
@@ -42,8 +43,6 @@ public class AStar {
 		
 		while(!openNodes.isEmpty()) {
 			if(visitedNodes >= pathfinder.getMaxNodeVisits()) {
-				// TODO: better error handling
-				System.out.println("Failed to find path: exceeded max node visits");
 				return;
 			}
 			
@@ -58,9 +57,6 @@ public class AStar {
 			
 			this.visitNode(currentNode);
 		}
-		
-		// TODO: better error handling
-		System.out.println("Failed to find path: ran out of open nodes");
 	}
 	
 	public boolean pathFound() {
@@ -124,26 +120,31 @@ public class AStar {
 		openNodes.add(node);
 	}
 	
-	// TODO: fix this garbage
 	private PathNode getNode(BlockPosition pos) {
-		for(PathNode node : openNodes) {
-			if(node.getPosition().equals(pos))
-				return node;
+		PathNode node = nodes.get(pos);
+		if(node != null) {
+			return node;
 		}
 		
-		for(PathNode node : closedNodes) {
-			if(node.getPosition().equals(pos))
-				return node;
-		}
-		
-		return new PathNode(pos);
+		node = new PathNode(pos);
+		nodes.put(pos, node);
+		return node;
 	}
 	
+	// Linear scan is more efficient than sorting - O(n) vs O(n log n)
 	private PathNode getCurrentNode() {
-		Optional<PathNode> opt = openNodes.stream()
-			.sorted(Comparator.comparing(PathNode::getFCost))
-			.findFirst();
-		return opt.isPresent() ? opt.get() : null;
+		PathNode lowest = null;
+		double lowestVal = Double.MAX_VALUE;
+		
+		for(PathNode node : openNodes) {
+			double val = node.getFCost();
+			if(val < lowestVal) {
+				lowest = node;
+				lowestVal = val;
+			}
+		}
+		
+		return lowest;
 	}
 	
 	private List<PathNode> getPath(PathNode end) {

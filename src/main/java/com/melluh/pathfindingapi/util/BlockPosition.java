@@ -63,4 +63,9 @@ public class BlockPosition {
 		return pos2.x == x && pos2.y == y && pos2.z == z;
 	}
 	
+	@Override
+	public int hashCode() {
+		return Objects.hash(x, y, z);
+	}
+	
 }
