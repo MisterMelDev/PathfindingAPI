@@ -1,0 +1,6 @@
+name: PathfinderTest
+author: Melluh
+version: 0.0.1
+main: com.melluh.pathfindertest.PathfinderTestPlugin
+commands:
+  pathfinder:
