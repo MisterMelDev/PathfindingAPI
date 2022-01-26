@@ -8,9 +8,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.Tag;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.Bisected.Half;
+import org.bukkit.block.data.type.Stairs;
 
 import com.melluh.pathfindingapi.util.BlockPosition;
 import com.melluh.pathfindingapi.util.WorldUtils;
@@ -70,15 +75,14 @@ public class AStar {
 	private void visitNode(PathNode node) {
 		visitedNodes++;
 		
+		BlockPosition nodePos = node.getPosition();
 		for(int dX = -1; dX <= 1; dX++) {
 			for(int dY = -1; dY <= 1; dY++) {
 				for(int dZ = -1; dZ <= 1; dZ++) {
 					// Skip if not moving
-					if(dX == 0 && dY == 0 && dZ == 0)
+					if(dX == 0 && dY == 0 && dZ == 0) {
 						continue;
 					}
-					
-					BlockPosition nodePos = node.getPosition();
 					
 					// Diagonal movement is not allowed when:
 					// - It is disabled in the pathfinder
@@ -86,7 +90,7 @@ public class AStar {
 					if(dX * dZ != 0 && (!pathfinder.canMoveDiagonally() || dY != 0 || !this.canMoveDiagonally(nodePos.getX(), nodePos.getY(), nodePos.getZ(), dX, dZ)))
 						continue;
 					
-					if(!this.canStandAt(nodePos.getX() + dX, nodePos.getY() + dY, nodePos.getZ() + dZ))
+					if(!this.checkMove(nodePos, dX, dY, dZ))
 						continue;
 					
 					BlockPosition neighbourPos = nodePos.getRelative(dX, dY, dZ);
@@ -102,9 +106,36 @@ public class AStar {
 		}
 	}
 	
-	private boolean canStandAt(int x, int y, int z) {
-		return this.isUnobstructed(x, y, z) &&
-				WorldUtils.canStandOn(world.getBlockAt(x, y - 1, z).getType());
+	private boolean checkMove(BlockPosition from, int dX, int dY, int dZ) {
+		int x = from.getX() + dX;
+		int y = from.getY() + dY;
+		int z = from.getZ() + dZ;
+		
+		Block standingOn = world.getBlockAt(x, y - 1, z);
+		if(standingOn.getType() == Material.LADDER) {
+			return this.isUnobstructed(x, y, z);
+		}
+		
+		if(!WorldUtils.canStandOn(standingOn.getType()) || !this.isUnobstructed(x, y, z))
+			return false;
+			
+		if(Tag.STAIRS.isTagged(standingOn.getType()) && !checkStair(standingOn, dX, dY, dZ))
+			return false;
+		
+		return true;
+	}
+	
+	private boolean checkStair(Block block, int dX, int dY, int dZ) {
+		BlockData data = block.getBlockData();
+		if(!(data instanceof Stairs))
+			return false;
+		
+		Stairs stairs = (Stairs) data;
+		if(stairs.getHalf() == Half.TOP)
+			return true;
+		
+		BlockFace facing = stairs.getFacing();
+		return facing.getModX() == dX && facing.getModZ() == dZ;
 	}
 	
 	private boolean canMoveDiagonally(int x, int y, int z, int dX, int dZ) {
