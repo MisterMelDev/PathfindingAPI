@@ -76,17 +76,20 @@ public class AStar {
 					// Skip if not moving
 					if(dX == 0 && dY == 0 && dZ == 0)
 						continue;
+					}
+					
+					BlockPosition nodePos = node.getPosition();
 					
 					// Diagonal movement is not allowed when:
 					// - It is disabled in the pathfinder
 					// - Moving up/down
-					if(dX * dZ != 0 && (!pathfinder.canMoveDiagonally() || dY != 0 || !this.canMoveDiagonally(node.getPosition().toLocation(world), dX, dZ)))
+					if(dX * dZ != 0 && (!pathfinder.canMoveDiagonally() || dY != 0 || !this.canMoveDiagonally(nodePos.getX(), nodePos.getY(), nodePos.getZ(), dX, dZ)))
 						continue;
 					
-					BlockPosition neighbourPos = node.getPosition().getRelative(dX, dY, dZ);
-					if(!this.canStandAt(neighbourPos.toLocation(world)))
+					if(!this.canStandAt(nodePos.getX() + dX, nodePos.getY() + dY, nodePos.getZ() + dZ))
 						continue;
 					
+					BlockPosition neighbourPos = nodePos.getRelative(dX, dY, dZ);
 					PathNode neighbour = this.getNode(neighbourPos);
 					
 					double tentativeGCost = node.getGCost() + node.getPosition().fastDistanceTo(neighbourPos);
@@ -99,19 +102,19 @@ public class AStar {
 		}
 	}
 	
-	private boolean canStandAt(Location feetLoc) {
-		return this.isUnobstructed(feetLoc) &&
-				WorldUtils.canStandOn(feetLoc.getBlock().getRelative(BlockFace.DOWN).getType());
+	private boolean canStandAt(int x, int y, int z) {
+		return this.isUnobstructed(x, y, z) &&
+				WorldUtils.canStandOn(world.getBlockAt(x, y - 1, z).getType());
 	}
 	
-	private boolean canMoveDiagonally(Location feetLoc, int dX, int dZ) {
-		return this.isUnobstructed(feetLoc.clone().add(dX, 0, 0)) &&
-				this.isUnobstructed(feetLoc.clone().add(0, 0, dZ));
+	private boolean canMoveDiagonally(int x, int y, int z, int dX, int dZ) {
+		return this.isUnobstructed(x + dX, y, z) &&
+				this.isUnobstructed(x, y, z + dZ);
 	}
 	
-	private boolean isUnobstructed(Location feetLoc) {
-		return WorldUtils.canStandIn(feetLoc.getBlock().getType()) &&
-				WorldUtils.canStandIn(feetLoc.getBlock().getRelative(BlockFace.UP).getType());
+	private boolean isUnobstructed(int x, int y, int z) {
+		return WorldUtils.canStandIn(world.getBlockAt(x, y, z).getType()) &&
+				WorldUtils.canStandIn(world.getBlockAt(x, y + 1, z).getType());
 	}
 	
 	private void addOpenNode(PathNode node) {
