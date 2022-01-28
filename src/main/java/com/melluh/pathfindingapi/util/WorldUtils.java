@@ -16,7 +16,7 @@ public class WorldUtils {
 	
 	public static boolean canStandIn(Material material) {
 		// TODO: expand check
-		return !material.isSolid();
+		return !material.isSolid() && !isLiquid(material);
 	}
 	
 	public static boolean canStandOn(Material material) {
@@ -25,6 +25,10 @@ public class WorldUtils {
 			return false;
 		
 		return material.isSolid();
+	}
+	
+	public static boolean isLiquid(Material material) {
+		return material == Material.WATER || material == Material.LAVA;
 	}
 	
 }
